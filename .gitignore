@@ -1,0 +1,8 @@
+__pycache__/*
+datasets/50salads/*
+datasets/breakfast/*
+save_dir/*
+data/__pycache__/*
+datasets/breakfast/mapping.txt
+model/__pycache__/*
+model/extras/__pycache__/*

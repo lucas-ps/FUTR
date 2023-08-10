@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+import lmdb
 from torch.utils.data import Dataset
 import os
 import sys
@@ -8,11 +9,15 @@ from numpy.random import randint
 from utils import *
 import pdb
 import random
+import pandas as pd
+from msgpack import Unpacker
+import re
 
 
 class BaseDataset(Dataset):
     def __init__(self, vid_list, actions_dict, features_path, gt_path, pad_idx, n_class,
-                 n_query=8,  mode='train', obs_perc=0.2, args=None):
+                 n_query=8,  mode='train', obs_perc=0.2, args=None, lmdb_path=None):
+
         self.n_class = n_class
         self.actions_dict = actions_dict
         self.pad_idx = pad_idx
@@ -24,6 +29,8 @@ class BaseDataset(Dataset):
         self.n_query = n_query
         self.args = args
         self.NONE = self.n_class - 1
+
+        self.lmdb_env = lmdb.open(lmdb_path, readonly=True, lock=False) if lmdb_path else None
 
         if self.mode == 'train' or self.mode == 'val':
             for vid in vid_list:
@@ -49,11 +56,22 @@ class BaseDataset(Dataset):
         vid_name = vid_file
 
         gt_file = os.path.join(self.gt_path, vid_file)
+        if not gt_file.endswith('.txt'):
+            gt_file += '.txt'
+
         feature_file = os.path.join(self.features_path, vid_file.split('.')[0]+'.npy')
-        features = np.load(feature_file)
+
+        # Depending on the mode (LMDB or NPY) load the features
+        if self.lmdb_env:
+            features = self._load_lmdb_features(vid_file)
+        else:
+            feature_file = os.path.join(self.features_path, vid_file.split('.')[0]+'.npy')
+            features = np.load(feature_file)
+        # Should be in the form (Dimensionality, sequence_length) 
+        #print(features.shape)
         features = features.transpose()
 
-        file_ptr = open(gt_file, 'r')
+        file_ptr = open(gt_file.replace(" ", ""), 'r')
         all_content = file_ptr.read().split('\n')[:-1]
         vid_len = len(all_content)
         observed_len = int(obs_perc*vid_len)
@@ -101,9 +119,46 @@ class BaseDataset(Dataset):
                 'trans_future_dur':torch.Tensor(trans_future_dur),
                 'trans_future_target' : torch.Tensor(trans_future_target),
                 }
-
         return item
 
+    def _load_lmdb_features(self, vid_file):
+        """ Loads TSN features from LMDB dataset for a specific video """
+        features = []
+        i = 1
+
+        # Ground truths provided are different to file names for stereo vodeos, not sure why, this code fixes the filenames
+        if '_stereo01_' in vid_file:
+            old_name = vid_file
+            vid_file = vid_file.replace('_stereo01_', '_').replace('.txt', '_ch1.txt')
+            parts = vid_file.split("_")
+            parts.pop(1)
+            vid_file = "_".join(parts)
+
+
+        # For each frame key, load the corresponding feature representation from the LMDB dataset
+        with self.lmdb_env.begin() as txn:
+            while True:
+                key = f"{vid_file.replace('.txt', '')}_frame_{i:010d}.jpg"
+                # if self.args.dataset == "breakfast":
+                #     keys = key.split("_")
+                #     key = "_".join(keys[2:])
+                value = txn.get(key.encode('utf-8'))
+                #print(key)
+                # print(value)
+                if value is not None:
+                    frame_features = np.frombuffer(value, 'float32')
+                    features.append(frame_features[-1024:])
+                    #print (frame_features.shape)
+                else:
+                    break
+                i += 1
+        features = np.array(features)
+        features = features.transpose()
+        #print(vid_file)
+        if features.shape == (0,):
+            vid_file = vid_file.replace('ch1', 'ch0')
+            features = self._load_lmdb_features(vid_file)
+        return features
 
     def my_collate(self, batch):
         '''custom collate function, gets inputs as a batch, output : batch'''

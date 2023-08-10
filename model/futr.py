@@ -14,13 +14,14 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 class FUTR(nn.Module):
 
-    def __init__(self, n_class, hidden_dim, src_pad_idx, device, args, n_query=8, n_head=8,
+    def __init__(self, n_class, hidden_dim, src_pad_idx, device, args, num_channels, n_query=8, n_head=8,
                  num_encoder_layers=6, num_decoder_layers=6):
         super().__init__()
 
         self.src_pad_idx = src_pad_idx
         self.device = device
         self.hidden_dim = hidden_dim
+        self.num_channels = num_channels
         self.input_embed = nn.Linear(args.input_dim, hidden_dim)
         self.transformer = Transformer(hidden_dim, n_head, num_encoder_layers, num_decoder_layers,
                                         hidden_dim*4, normalize_before=False)
@@ -48,6 +49,7 @@ class FUTR(nn.Module):
             # Sinusoidal position encoding
             self.pos_enc = PositionalEncoding(hidden_dim)
 
+
         if args.input_type =='gt':
             self.gt_emb = nn.Embedding(n_class+2, self.hidden_dim, padding_idx=n_class+1)
             nn.init.xavier_uniform_(self.gt_emb.weight)
@@ -55,6 +57,7 @@ class FUTR(nn.Module):
     def forward(self, inputs, mode='train'):
         if mode == 'train' :
             src, src_label = inputs
+            # should be [batch_size, num_segments, num_channels] - num_channels = 1024 for TSN, 2048 for i3d
             tgt_key_padding_mask = None
             src_key_padding_mask = get_pad_mask(src_label, self.src_pad_idx).to(self.device)
             memory_key_padding_mask = src_key_padding_mask.clone().to(self.device)
@@ -66,14 +69,17 @@ class FUTR(nn.Module):
 
         tgt_mask = None
 
-        if self.args.input_type == 'i3d_transcript':
+        if self.args.input_type == 'i3d_transcript' or self.args.input_type == 'TSN':
+            #print(src.shape)
             B, S, C = src.size()
             src = self.input_embed(src) #[B, S, C]
+            src = F.relu(src)
+            #print(src.shape)
         elif self.args.input_type == 'gt':
             B, S = src.size()
             src = self.gt_emb(src)
-        src = F.relu(src)
-
+            src = F.relu(src)   
+            
         # action query embedding
         action_query = self.query_embed.weight
         action_query = action_query.unsqueeze(0).repeat(B, 1, 1)
@@ -106,8 +112,8 @@ class FUTR(nn.Module):
             output['seg'] = tgt_seg
 
         return output
-
-
+    
+    
 def get_pad_mask(seq, pad_idx):
     return (seq ==pad_idx)
 

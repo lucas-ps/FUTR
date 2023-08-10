@@ -11,6 +11,7 @@ import random
 from torch.backends import cudnn
 from opts import parser
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
+from os.path import join
 
 from utils import read_mapping_dict
 from data.basedataset import BaseDataset
@@ -54,6 +55,8 @@ def main():
         data_path = './datasets/breakfast'
     elif dataset == '50salads' :
         data_path = './datasets/50salads'
+    elif dataset == 'ek55' :
+        data_path = './datasets/ek55'
 
     mapping_file = os.path.join(data_path, 'mapping.txt')
     actions_dict = read_mapping_dict(mapping_file)
@@ -76,7 +79,7 @@ def main():
     # Model specification
     model = FUTR(n_class, args.hidden_dim, device=device, args=args, src_pad_idx=pad_idx,
                             n_query=args.n_query, n_head=args.n_head,
-                            num_encoder_layers=args.n_encoder_layer, num_decoder_layers=args.n_decoder_layer).to(device)
+                            num_encoder_layers=args.n_encoder_layer, num_decoder_layers=args.n_decoder_layer, num_channels=1024).to(device)
 
     model_save_path = os.path.join('./save_dir', args.dataset, args.task, 'model/transformer', split, args.input_type, \
                                     'runs'+str(args.runs))
@@ -110,13 +113,22 @@ def main():
             predict(model, video_test_list, args, obs_p, n_class, actions_dict, device)
     else :
         # Training
-        trainset = BaseDataset(video_list, actions_dict, features_path, gt_path, pad_idx, n_class, n_query=args.n_query, args=args)
+        trainset = None
+        if args.input_type == "TSN":
+            if dataset == "50salads":
+                dataset_path = "/media/lucas/Linux SSD/rulstm/RULSTM/data/50-salads/rgb/"
+            elif dataset == "breakfast":
+                dataset_path = "/media/lucas/Linux SSD/rulstm/RULSTM/data/Breakfast1/rgb/"
+            else:
+                dataset_path = "/media/lucas/Linux SSD/rulstm/RULSTM/data/ek55/rgb/"
+            trainset = BaseDataset(video_list, actions_dict, features_path, gt_path, pad_idx, n_class, n_query=args.n_query, args=args, lmdb_path=dataset_path)
+        else:
+            trainset = BaseDataset(video_list, actions_dict, features_path, gt_path, pad_idx, n_class, n_query=args.n_query, args=args)
         train_loader = DataLoader(trainset, batch_size=args.batch_size, \
                                                     shuffle=True, num_workers=args.workers,
                                                     collate_fn=trainset.my_collate)
         train(args, model, train_loader, optimizer, scheduler, criterion,
                      model_save_path, pad_idx, device )
-
 
 if __name__ == '__main__':
     main()

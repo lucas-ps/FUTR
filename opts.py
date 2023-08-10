@@ -24,7 +24,7 @@ parser.add_argument("--batch_size", type=int, default=32)
 parser.add_argument("--test_batch_size", type=int, default=1)
 parser.add_argument("--epochs", type=int, default=50)
 parser.add_argument("--warmup_epochs", type=int, default=10)
-parser.add_argument("--workers", type=int, default= 30)
+parser.add_argument("--workers", type=int, default= 16)
 parser.add_argument("--lr", type=float, default=1e-3)
 parser.add_argument("--lr_mul", type=float, default=2.0)
 parser.add_argument("--weight_decay", type=float, default=5e-3) #5e-3
@@ -50,5 +50,5 @@ parser.add_argument("--pos_emb", action='store_true', help='positional embedding
 parser.add_argument("--max_pos_len", type=int, default=2000, help='position embedding number for linear interpolation')
 
 #Test on GT or decoded input
-parser.add_argument("--input_type", default="i3d_transcript", help="select input type: [\"decoded\", \"gt\"]")
+parser.add_argument("--input_type", default="i3d_transcript", help="select input type: [\"TSN\"\"decoded\", \"gt\"]")
 parser.add_argument("--runs", default=0, help="save runs")

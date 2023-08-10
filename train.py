@@ -5,13 +5,14 @@ import os
 import pdb
 import numpy as np
 from utils import cal_performance, normalize_duration
+from tqdm import tqdm
 
 
 def train(args, model, train_loader, optimizer, scheduler, criterion,  model_save_path, pad_idx, device):
     model.to(device)
     model.train()
     print("Training Start")
-    for epoch in range(args.epochs):
+    for epoch in tqdm(range(args.epochs), desc="Epochs"):        
         epoch_acc =0
         epoch_loss = 0
         epoch_loss_class = 0
@@ -38,6 +39,11 @@ def train(args, model, train_loader, optimizer, scheduler, criterion,  model_sav
             elif args.input_type == 'gt':
                 gt_features = past_label.int()
                 inputs = (gt_features, past_label)
+            elif args.input_type == 'TSN':
+                #tsn_features = past_label.int()
+                inputs = (features, past_label)
+            else:
+                raise ValueError(f"Unexpected input_type value: {args.input_type}")
 
             outputs = model(inputs)
             losses = 0
@@ -82,7 +88,8 @@ def train(args, model, train_loader, optimizer, scheduler, criterion,  model_sav
 
 
         epoch_loss = epoch_loss / (i+1)
-        print("Epoch [", (epoch+1), '/', args.epochs, '] Loss : %.3f'%epoch_loss)
+        #print("Epoch [", (epoch+1), '/', args.epochs, '] Loss : %.3f'%epoch_loss)
+        print(' Loss : %.3f'%epoch_loss)
         if args.anticipate :
             accuracy = total_class_correct/total_class
             epoch_loss_class = epoch_loss_class / (i+1)

@@ -6,3 +6,5 @@ data/__pycache__/*
 datasets/breakfast/mapping.txt
 model/__pycache__/*
 model/extras/__pycache__/*
+datasets/ek55/**
+bf_tsn_log.txt

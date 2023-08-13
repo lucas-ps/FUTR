@@ -10,3 +10,4 @@ datasets/ek55/**
 bf_tsn_log.txt
 50s_tsn_log.txt
 ek55_tsn_log.txt
+eval_log.txt

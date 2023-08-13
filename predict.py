@@ -202,9 +202,9 @@ def predict(model, vid_list, args, obs_p, n_class, actions_dict, device):
             avg_class_precision = total_precision / len(actions_dict)
             avg_class_recall = total_recall / len(actions_dict)
 
-            result = 'obs. %d '%int(100*obs_p) + 'pred. %d '%int(100*eval_p[i])
-            result = result +'\nAverage Top-1 Accuracy: %.4f'%(avg_top1_accuracy) +'\n'
-            result = result +'\n\nMean over Classes: %.4f'%(acc)
+            result = '\nobs. %d '%int(100*obs_p) + 'pred. %d '%int(100*eval_p[i])
+            result = result +'\nAverage Top-1 Accuracy: %.4f'%(avg_top1_accuracy)
+            result = result +'\nMean over Classes: %.4f'%(acc)
             result = result +'\nAverage Class Precision: %.4f'%(avg_class_precision)
             result = result +'\nAverage Class Recall: %.4f'%(avg_class_recall) 
             results.append(result)

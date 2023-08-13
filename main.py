@@ -99,7 +99,7 @@ def main():
 
 
     if args.predict :
-        obs_perc = [0.2, 0.3]
+        obs_perc = [0.3]
         results_save_path = results_save_path +'/runs'+ str(args.runs) +'.txt'
         model_path = model_save_path + '/checkpoint'+ str(args.epochs) +'.ckpt'
         print("Predict with ", model_path)

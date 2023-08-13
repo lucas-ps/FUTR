@@ -139,9 +139,9 @@ class BaseDataset(Dataset):
         with self.lmdb_env.begin() as txn:
             while True:
                 key = f"{vid_file.replace('.txt', '')}_frame_{i:010d}.jpg"
-                # if self.args.dataset == "breakfast":
-                #     keys = key.split("_")
-                #     key = "_".join(keys[2:])
+                if self.args.dataset == "breakfast":
+                    keys = key.split("_")
+                    key = "_".join(keys[2:])
                 value = txn.get(key.encode('utf-8'))
                 #print(key)
                 # print(value)
@@ -155,9 +155,15 @@ class BaseDataset(Dataset):
         features = np.array(features)
         features = features.transpose()
         #print(vid_file)
+        #print(features.shape)
         if features.shape == (0,):
-            vid_file = vid_file.replace('ch1', 'ch0')
-            features = self._load_lmdb_features(vid_file)
+            if self.args.dataset == "breakfast":
+                vid_file = vid_file.replace('ch1', 'ch0')
+                features = self._load_lmdb_features(vid_file)
+            else:
+                print("No features found for video", vid_file)
+        if features.shape[0] != 1024:
+            print(f"Error in video {vid_file}: Expected shape (1024, x) but got {features.shape}")
         return features
 
     def my_collate(self, batch):

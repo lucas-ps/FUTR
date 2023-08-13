@@ -40,6 +40,30 @@ def eval_file(gt_content, recog_content, obs_percentage, classes):
 
     return n_T, n_F
 
+def eval_file_more(gt_content, recog_content, obs_percentage, classes):
+    # github.com/yabufarha/anticipating-activities
+    last_frame = min(len(recog_content), len(gt_content))
+    recognized = recog_content[int(obs_percentage * len(gt_content)):last_frame]
+    ground_truth = gt_content[int(obs_percentage * len(gt_content)):last_frame]
+
+    n_TP = np.zeros(len(classes))
+    n_FN = np.zeros(len(classes))
+    n_FP = np.zeros(len(classes))
+
+    for i in range(len(ground_truth)):
+        if ground_truth[i] == recognized[i]:
+            n_TP[classes[ground_truth[i]]] += 1
+        else:
+            n_FN[classes[ground_truth[i]]] += 1
+
+    for i in range(len(recognized)):
+        if recognized[i] != ground_truth[i]:
+            if recognized[i] != 'NONE':
+                n_FP[classes[recognized[i]]] += 1
+    
+    top1_acc = n_TP.sum() / len(ground_truth)
+    return n_TP, n_FN, n_FP, top1_acc
+
 def cal_performance(pred, gold, trg_pad_idx, smoothing=False):
     # https://github.com/jadore801120/attention-is-all-you-need-pytorch
     '''Apply label smoothing if needed'''

@@ -101,10 +101,7 @@ def main():
     if args.predict :
         obs_perc = [0.2, 0.3]
         results_save_path = results_save_path +'/runs'+ str(args.runs) +'.txt'
-        if args.dataset == 'breakfast' :
-            model_path = './ckpt/bf_split'+args.split+'.ckpt'
-        elif args.dataset == '50salads':
-            model_path = './ckpt/50s_split'+args.split+'.ckpt'
+        model_path = model_save_path + '/checkpoint'+ str(args.epochs) +'.ckpt'
         print("Predict with ", model_path)
 
         for obs_p in obs_perc :
@@ -120,7 +117,7 @@ def main():
             elif dataset == "breakfast":
                 dataset_path = "/media/lucas/Linux SSD/rulstm/RULSTM/data/Breakfast1/rgb/"
             else:
-                dataset_path = "/media/lucas/Linux SSD/rulstm/RULSTM/data/ek55/rgb/"
+                dataset_path = "/media/lucas/Linux SSD/rulstm/FEATEXT/features/EK/rgb/"
             trainset = BaseDataset(video_list, actions_dict, features_path, gt_path, pad_idx, n_class, n_query=args.n_query, args=args, lmdb_path=dataset_path)
         else:
             trainset = BaseDataset(video_list, actions_dict, features_path, gt_path, pad_idx, n_class, n_query=args.n_query, args=args)

@@ -14,3 +14,10 @@ do
    ./scripts/bf_train_tsn.sh ${split_num}
 done
 
+# for split_num in $(seq 1 4)
+# do
+#    echo "Training Breakfast on split ${split_num}"
+#    ./scripts/ek55_train_tsn.sh ${split_num}
+# done
+
+

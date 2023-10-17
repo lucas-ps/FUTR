@@ -44,3 +44,5 @@ For a more comprehensive analysis, please refer to the main paper.
 ## Acknowledgements
 
 We would like to express gratitude towards the creators of the original FUTR and RULSTM models. Our modifications are built upon their foundational work.
+
+We would also like to acknowledge the extensive support from our supervisor - Dr Sareh Rowlands of the Univeristy of Exeter
